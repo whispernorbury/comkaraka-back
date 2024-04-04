@@ -1,0 +1,20 @@
+# General Output
+/dist
+
+# Dependencies
+/node_modules
+
+# environment
+.env
+firebase-key.json
+
+# mac
+.DS_Store
+
+# dummy data
+/dummy_data
+
+# bfg cleaner
+bfg*.jar
+replacements.txt
+git-filter-repo

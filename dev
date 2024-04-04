@@ -1,0 +1,50 @@
+#!/bin/bash
+if ! docker info &>/dev/null; then
+  echo "!!! Please Run -Docker- first. !!!"
+  exit 0
+fi 
+echo "####### 명령어를 입력하시오. #########"
+PS3="[입력] : "
+options=("실행(관제)" "실행(백그라운드)" "서버 끄기" "컨테이너 및 캐시 삭제" "볼륨(DB) 삭제" "전체 초기화")
+select opt in "${options[@]}"
+do
+  case $opt in
+    "실행(관제)")
+      echo "도커 컨테이너를 빌드하고 실행합니다. Ctrl+C로 종료할 수 있습니다."
+      sleep 0.5s
+      docker compose up --build
+      break
+    ;;
+    "실행(백그라운드)")
+      echo "백그라운드에서 서버를 실행합니다."
+      sleep 0.5s
+      docker compose up --build -d
+      break
+    ;;
+    "서버 끄기")
+      echo "서버를 종료합니다."
+      sleep 0.5s
+      docker compose down
+      break
+    ;;
+    "컨테이너 및 캐시 삭제")
+      echo "도커와 관한 데이터를 모두 삭제합니다."
+      sleep 0.5s
+      docker system prune -a
+      break
+    ;;
+    "볼륨(DB) 삭제")
+      echo "모든 정적 데이터를 삭제합니다."
+      sleep 0.5s
+      rm -r ~/Docker
+      break
+    ;;
+    "전체 초기화")
+      echo "모든 데이터를 초기화합니다."
+      sleep 0.5s
+      rm -rf ~/Docker
+      docker system prune -a
+    break
+    ;;
+  esac
+done

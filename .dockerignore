@@ -1,0 +1,35 @@
+# Environment
+.env
+
+# Dependencies
+node_modules/
+a
+
+# General output of 'npm run dev'
+dist
+
+# Git
+.gitignore
+.git
+.gitmodules
+
+# Lint and Prettier
+.eslintrc.js
+prettier.config.js
+
+# Docker
+docker-compose.yaml
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Other container
+elk
+mysql
+nginx
+redis
+
+
+# Readme
+*.md
+LICENSE

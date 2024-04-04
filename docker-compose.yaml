@@ -1,0 +1,159 @@
+version: "3.8"
+
+networks:
+  network:
+    driver: bridge
+
+services:
+  nodeapp:
+    container_name: nodeapp
+    build: ./
+    expose:
+      - 8080
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+      HOST: 127.0.0.1
+      PORT: 8080
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: comkaraka
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      ELASTIC_HOST: http://elasticsearch:9200
+      ELASTIC_USERNAME: elastic
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SALTING_NUM: 15
+      SESSION_AGE: 10080 #minutes 10080m = 7days
+      SESSION_KEY: ${NODE_SESSION_KEY}
+      SEPARATOR: ckrk
+      CONTENT_MAX_LENGTH: 50
+    healthcheck:
+      test: curl -f http://localhost:8080/healthcheck
+      interval: 1s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    ports:
+      - 80:80/tcp
+      - 443:443
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+    depends_on:
+      nodeapp:
+        condition: service_healthy
+
+  mysql:
+    container_name: mysql
+    build: ./mysql
+    expose:
+      - 3306
+    volumes:
+      - ~/Docker/comkaraka/volume/mysql:/var/lib/mysql
+    command: --lower_case_table_names=1
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: comkaraka
+      TZ: Asia/Seoul
+    healthcheck:
+      test: mysqladmin ping -p${MYSQL_ROOT_PASSWORD} || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    container_name: redis
+    build: ./redis
+    expose:
+      - 6379
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+      TZ: Asia/Seoul
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: redis-cli ping -a ${REDIS_PASSWORD} || exit 1
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    volumes:
+      - ~/Docker/comkaraka/volume/redis:/data
+  
+  elasticsearch:
+    container_name: elasticsearch
+    build: ./elk/elasticsearch
+    expose:
+      - 9200
+      - 9300
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+      node.name: ella
+      discovery.type: single-node
+      cluster.name: es
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASITC_USERNAME: elastic
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      bootstrap.memory_lock: true
+      xpack.security.enabled: false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: curl -u elastic:${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health?pretty
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - ~/Docker/comkaraka/volume/elasticsearch:/usr/share/elasticsearch/data
+
+  logstash:
+    container_name: logstash
+    build: ./elk/logstash
+    expose:
+      - 9600
+    networks:
+      - network
+    environment:
+      LC_ALL: C.UTF-8
+      LS_JAVA_OPTS: -Xmx256m -Xms256m
+    healthcheck:
+      test: curl http://localhost:9600/?pretty
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
