@@ -1,0 +1,111 @@
+{
+  "index_patterns": ["articles"],
+  "template": {
+    "settings": {
+      "index": {
+        "analysis": {
+          "tokenizer": {
+            "arti_nori_tokenizer": {
+              "type": "nori_tokenizer",
+              "decompound_mode": "mixed",
+              "discard_punctuation": true,
+              "user_dictionary": "custom_dictionary.txt"
+            },
+            "arti_ngram_tokenizer": {
+              "token_chars": ["letter", "digit"],
+              "type": "ngram",
+              "min_gram": 2,
+              "max_gram": 3
+            }
+          },
+          "filter": {
+            "stopwords": {
+              "type": "stop",
+              "stopwords": ["", " "]
+            },
+            "custom_synonym": {
+              "type": "synonym",
+              "synonyms_path": "custom_synonym.txt",
+              "updateable": true
+            }
+          },
+          "analyzer": {
+            "arti_ngram_analyzer": {
+              "type": "custom",
+              "tokenizer": "arti_ngram_tokenizer",
+              "filter": [
+                "lowercase",
+                "trim",
+                "stop",
+                "nori_readingform",
+                "stopwords"
+              ],
+              "char_filter": ["html_strip"]
+            },
+            "arti_nori_analyzer": {
+              "type": "custom",
+              "tokenizer": "arti_nori_tokenizer",
+              "filter": [
+                "lowercase",
+                "trim",
+                "stop",
+                "nori_readingform",
+                "stopwords"
+              ],
+              "char_filter": ["html_strip"]
+            },
+            "arti_nori_analyzer_for_search": {
+              "type": "custom",
+              "tokenizer": "arti_nori_tokenizer",
+              "filter": [
+                "lowercase",
+                "stop",
+                "trim",
+                "nori_readingform",
+                "stopwords",
+                "custom_synonym"
+              ],
+              "char_filter": ["html_strip"]
+            },
+            "arti_ngram_analyzer_for_search": {
+              "type": "custom",
+              "tokenizer": "arti_ngram_tokenizer",
+              "filter": [
+                "lowercase",
+                "stop",
+                "trim",
+                "nori_readingform",
+                "stopwords",
+                "custom_synonym"
+              ],
+              "char_filter": ["html_strip"]
+            }
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "user_id": {
+          "type": "keyword"
+        },
+        "title": {
+          "type": "text",
+          "analyzer": "arti_ngram_analyzer",
+          "search_analyzer": "arti_ngram_analyzer_for_search"
+        },
+        "category": {
+          "type": "keyword"
+        },
+        "catevalue": {
+          "type": "keyword"
+        },
+        "content": {
+          "type": "text",
+          "analyzer": "arti_nori_analyzer",
+          "search_analyzer": "arti_nori_analyzer_for_search"
+        }
+      }
+    }
+  }
+}

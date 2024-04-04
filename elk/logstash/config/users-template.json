@@ -1,0 +1,89 @@
+{
+  "index_patterns": ["users"],
+  "template": {
+    "settings": {
+      "index": {
+        "analysis": {
+          "tokenizer": {
+            "addi_nori_tokenizer": {
+              "type": "nori_tokenizer",
+              "decompound_mode": "mixed",
+              "discard_punctuation": false,
+              "user_dictionary": "custom_dictionary.txt"
+            },
+            "name_ngram_tokenizer": {
+              "type": "ngram",
+              "token_chars": ["letter", "digit"],
+              "min_gram": 1,
+              "max_gram": 2
+            }
+          },
+          "filter": {
+            "stopwords": {
+              "type": "stop",
+              "stopwords": [" ", "", "ckrk"]
+            },
+            "custom_synonym": {
+              "type": "synonym",
+              "synonyms_path": "custom_synonym.txt",
+              "updateable": true
+            }
+          },
+          "analyzer": {
+            "name_ngram_analyzer": {
+              "type": "custom",
+              "tokenizer": "name_ngram_tokenizer",
+              "filter": [
+                "lowercase",
+                "trim",
+                "stop",
+                "nori_readingform",
+                "stopwords"
+              ],
+              "char_filter": ["html_strip"]
+            },
+            "addi_nori_analyzer": {
+              "type": "custom",
+              "tokenizer": "addi_nori_tokenizer",
+              "filter": [
+                "lowercase",
+                "trim",
+                "stop",
+                "nori_readingform",
+                "stopwords"
+              ],
+              "char_filter": ["html_strip"]
+            },
+            "addi_nori_analyzer_for_search": {
+              "type": "custom",
+              "tokenizer": "addi_nori_tokenizer",
+              "filter": [
+                "lowercase",
+                "trim",
+                "stop",
+                "nori_readingform",
+                "stopwords",
+                "custom_synonym"
+              ],
+              "char_filter": ["html_strip"]
+            }
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "user_name": {
+          "type": "text",
+          "analyzer": "name_ngram_analyzer",
+          "search_analyzer": "name_ngram_analyzer"
+        },
+        "user_addi_info": {
+          "type": "text",
+          "analyzer": "addi_nori_analyzer",
+          "search_analyzer": "addi_nori_analyzer_for_search"
+        }
+      }
+    }
+  }
+}
