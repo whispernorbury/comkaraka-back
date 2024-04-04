@@ -1,0 +1,32 @@
+name: CI/CD for Comkaraka REST API
+
+on: 
+  push:
+    branches:
+      - main
+      
+permissions: read-all
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: compose
+        uses: appleboy/ssh-action@master
+        with:
+          username: ${{ secrets.EC2_USER }}
+          host: ${{ secrets.EC2_HOST }}
+          key: ${{ secrets.EC2_SSH_PEM_KEY }}
+          script: |
+            cd comkaraka-back
+
+            sudo docker compose down
+            sudo docker rm $(sudo docker ps -aq)
+            sudo docker rmi $(sudo docker images -q)
+
+            git pull
+            sudo docker compose up --build -d
